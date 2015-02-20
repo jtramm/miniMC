@@ -1,4 +1,4 @@
-COMPILER    = gnu
+COMPILER    = intel
 
 # Standard Flags
 CFLAGS := -std=gnu99
@@ -17,7 +17,7 @@ endif
 ifeq ($(COMPILER),intel)
   CC = icc
   LDFLAGS += -openmp
-  CFLAGS += -O3 -xhost -ansi-alias -no-prec-div -DINTEL
+  CFLAGS += -O3 -xhost -ansi-alias -no-prec-div -DINTEL -vec-report6
 endif
 
 all:

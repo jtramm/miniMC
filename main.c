@@ -26,7 +26,7 @@ void plot( int nbins, float * mean, float * variance )
 
 int main(void)
 {
-	long n_particles = 10000000;
+	long n_particles = 1000000000;
 	int global_tally[NBINS] = {0};
 	int global_variance[NBINS] = {0};
 
@@ -38,9 +38,25 @@ int main(void)
 
 	#pragma omp parallel default(none) shared(n_particles, global_tally, global_variance) reduction(+:n_collisions) 
 	{
+		// stack is faster for small # of bins
 		int local_tally[NBINS] = {0};
 		int local_variance[NBINS] = {0};
 		int particle_tally[NBINS] = {0};
+		/*
+		#ifdef INTEL
+		int * local_tally = (int *) _mm_malloc( NBINS * sizeof(int), 64 );
+		memset(local_tally, 0, NBINS * sizeof(int));
+		int * local_variance = (int *) _mm_malloc( NBINS * sizeof(int), 64 );
+		memset(local_variance, 0, NBINS * sizeof(int));
+		int * particle_tally = (int *) _mm_malloc( NBINS * sizeof(int), 64 );
+		memset(particle_tally, 0, NBINS * sizeof(int));
+		#else
+		//int * local_tally = (int *) calloc( NBINS, sizeof(int) );
+		//int * local_variance = (int *) calloc( NBINS, sizeof(int) );
+		//int * particle_tally = (int *) calloc( NBINS, sizeof(int) );
+		#endif
+		*/
+
 		unsigned int seed = 1337 + time(NULL) + omp_get_thread_num();
 
 		#pragma omp for schedule(dynamic, 100)
@@ -124,9 +140,10 @@ int main(void)
 			#pragma simd
 			for( int j = 0; j < NBINS; j++ )
 			{
-				local_tally[j] += particle_tally[j];
-				local_variance[j] += particle_tally[j] * particle_tally[j];
+				int tally = particle_tally[j];
 				particle_tally[j] = 0;
+				local_tally[j] += tally;
+				local_variance[j] += tally * tally;
 			}
 
 		}
