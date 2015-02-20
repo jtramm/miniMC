@@ -26,7 +26,7 @@ void plot( int nbins, float * mean, float * variance )
 
 int main(void)
 {
-	long n_particles = 10000000;
+	long n_particles = 10;
 	int global_tally[NBINS] = {0};
 	int global_variance[NBINS] = {0};
 
@@ -43,13 +43,13 @@ int main(void)
 		int particle_tally[NBINS] = {0};
 		unsigned int seed = 1337 + time(NULL) + omp_get_thread_num();
 
-		#pragma omp for schedule(dynamic, 100)
+		#pragma omp for schedule(dynamic, 1)
 		// Loop over particles
 		for( long i = 0; i < n_particles; i++ )
 		{
 			// Particle State
 			float x;
-			float direction;
+			float direction[3];
 			int region;
 
 			// Birth Particle Location
@@ -60,7 +60,13 @@ int main(void)
 				region = 2;
 
 			// Birth Particle Direction
-			direction = rand_r(&seed) % 2; 
+			for( int j = 0; j < 3; j++ )
+				direction[j] = (float) rand_r(&seed) / RAND_MAX * 2.f - 1.f; 
+
+			for( int j = 0; j < 3; j++ )
+				printf("D[%d] = %.3lf\t", direction[j]);
+			printf("\n");
+
 
 			while(1)
 			{
@@ -134,7 +140,8 @@ int main(void)
 				else
 				{
 					particle_tally[(int) (x*(NBINS/6.f))]++;
-					direction = rand_r(&seed) % 2; 
+					for( int j = 0; j < 3; j++ )
+						direction[j] = rand_r(&seed) % 3 - 1; 
 					n_collisions++;
 				}
 			}
