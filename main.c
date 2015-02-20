@@ -26,7 +26,7 @@ void plot( int nbins, float * mean, float * variance )
 
 int main(void)
 {
-	long n_particles = 100000000;
+	long n_particles = 1000000;
 	int global_tally[NBINS] = {0};
 	int global_variance[NBINS] = {0};
 
@@ -85,13 +85,15 @@ int main(void)
 				// Move Particle
 				if( region == 1 )
 				{
-					if( direction = 0 )
+					if( direction == 0 )
 					{
 						if( dist > x ) // Particle Escapes Left
 						{
 							alive = 0;
 							break;
 						}
+						else
+							x -= dist;
 					}
 					else
 					{
@@ -99,21 +101,25 @@ int main(void)
 						{
 							x = 2.f;
 							region = 2;
-							break;
+							continue;
 						}
+						else
+							x += dist;
 					}
 				}
 				else
 				{
-					if( direction = 0 )
+					if( direction == 0 )
 					{
 						if( dist > x - 2.f ) // Particle Travels 2 -> 1
 						{
 
 							x = 2.f;
 							region = 1;
-							break;
+							continue;
 						}
+						else
+							x -= dist;
 					}
 					else
 					{
@@ -122,6 +128,8 @@ int main(void)
 							alive = 0;
 							break;
 						}
+						else
+							x += dist;
 					}
 				}
 
