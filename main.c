@@ -7,22 +7,24 @@
 // Direction: 0 = left, 1 = right
 // Region: 1 = left, 2 = right
 
+#define NBINS 600
+
 int main(void)
 {
 
-	long n_particles = 100000000;
-	int global_tally[600] = {0};
-	int global_variance[600] = {0};
+	long n_particles = 10000000;
+	int global_tally[NBINS] = {0};
+	int global_variance[NBINS] = {0};
 
 	omp_set_num_threads(omp_get_num_procs());
-	
+
 	double start = omp_get_wtime();
 
 	#pragma omp parallel default(none) shared(n_particles, global_tally, global_variance)  
 	{
-		int local_tally[600] = {0};
-		int local_variance[600] = {0};
-		int particle_tally[600] = {0};
+		int local_tally[NBINS] = {0};
+		int local_variance[NBINS] = {0};
+		int particle_tally[NBINS] = {0};
 		unsigned int seed = 1337 + time(NULL) + omp_get_thread_num();
 
 		#pragma omp for schedule(dynamic)
@@ -68,22 +70,27 @@ int main(void)
 				if( region == 1 )
 				{
 					if( direction = 0 )
+					{
 						if( dist > x ) // Particle Escapes Left
 						{
 							alive = 0;
 							break;
 						}
-						else
-							if( dist > 2.f - x ) // Particle Travels 1 -> 2
-							{
-								x = 2.f;
-								region = 2;
-								break;
-							}
+					}
+					else
+					{
+						if( dist > 2.f - x ) // Particle Travels 1 -> 2
+						{
+							x = 2.f;
+							region = 2;
+							break;
+						}
+					}
 				}
 				else
 				{
 					if( direction = 0 )
+					{
 						if( dist > x - 2.f ) // Particle Travels 2 -> 1
 						{
 
@@ -91,12 +98,15 @@ int main(void)
 							region = 1;
 							break;
 						}
-						else
-							if( dist > 6.f - x ) // Particle Escapes Right
-							{
-								alive = 0;
-								break;
-							}
+					}
+					else
+					{
+						if( dist > 6.f - x ) // Particle Escapes Right
+						{
+							alive = 0;
+							break;
+						}
+					}
 				}
 
 
@@ -112,7 +122,7 @@ int main(void)
 			}
 
 			// Accumulate Tallies for Neutron history into Local running tally
-			for( int j = 0; j < 600; j++ )
+			for( int j = 0; j < NBINS; j++ )
 			{
 				local_tally[j] += particle_tally[j];
 				local_variance[j] += particle_tally[j] * particle_tally[j];
@@ -122,25 +132,25 @@ int main(void)
 		}
 
 		// Global Accumulation of Tallies
-		for( int i = 0; i < 600; i++ )
+		for( int i = 0; i < NBINS; i++ )
 		{
 			global_tally[i] = local_tally[i];
 			global_variance[i] = local_variance[i];
 		}
 	}
 
-	float mean[600] = {0};
-	float variance[600] = {0};
+	float mean[NBINS] = {0};
+	float variance[NBINS] = {0};
 	// Compute statistics
-	for( int i = 0; i < 600; i++ )
+	for( int i = 0; i < NBINS; i++ )
 	{
 		mean[i] = (float) global_tally[i] / n_particles;
 		variance[i] = sqrtf( 1.f / (n_particles-1) * ( (float) global_variance[i] / n_particles - mean[i] * mean[i] )  ); 
 	}
 
-//	for( int i = 0; i < 600; i ++ )
-//		printf("Bin: %d\tMean: %f\tVariance: %f\n", i, mean[i], variance[i]);
-	
+	//	for( int i = 0; i < NBINS; i ++ )
+	//		printf("Bin: %d\tMean: %f\tVariance: %f\n", i, mean[i], variance[i]);
+
 	double end = omp_get_wtime();
 
 	printf("Neutrons:   %g\n", (float) n_particles);
