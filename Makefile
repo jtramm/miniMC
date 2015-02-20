@@ -29,3 +29,5 @@ run:
 	./miniMC
 graph:
 	gnuplot graph.gp
+edit:
+	vim main.c

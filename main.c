@@ -26,7 +26,7 @@ void plot( int nbins, float * mean, float * variance )
 
 int main(void)
 {
-	long n_particles = 10;
+	long n_particles = 1000000;
 	int global_tally[NBINS] = {0};
 	int global_variance[NBINS] = {0};
 
@@ -43,13 +43,13 @@ int main(void)
 		int particle_tally[NBINS] = {0};
 		unsigned int seed = 1337 + time(NULL) + omp_get_thread_num();
 
-		#pragma omp for schedule(dynamic, 1)
+		#pragma omp for schedule(dynamic, 100)
 		// Loop over particles
 		for( long i = 0; i < n_particles; i++ )
 		{
 			// Particle State
 			float x;
-			float direction[3];
+			float direction;
 			int region;
 
 			// Birth Particle Location
@@ -60,13 +60,7 @@ int main(void)
 				region = 2;
 
 			// Birth Particle Direction
-			for( int j = 0; j < 3; j++ )
-				direction[j] = (float) rand_r(&seed) / RAND_MAX * 2.f - 1.f; 
-
-			for( int j = 0; j < 3; j++ )
-				printf("D[%d] = %.3lf\t", direction[j]);
-			printf("\n");
-
+			direction = (float) rand_r(&seed) / RAND_MAX * M_PI; 
 
 			while(1)
 			{
@@ -84,54 +78,35 @@ int main(void)
 					sigma_a = 1.2f;
 				}
 
-				// Sample Flight Distance
+				// Sample Flight Distance and Project onto X-axis
 				float dist = -logf( (float) rand_r(&seed) / RAND_MAX  ) / sigma_t;
+				dist = dist * cosf(direction);
 
 				// Move Particle
 				if( region == 1 )
 				{
-					if( direction == 0 )
+					x += dist;
+					if( x < 0 ) // Particle Escapes Left
+						break;
+					if( x > 2.f ) // Particle Travels 1 -> 2
 					{
-						if( dist > x ) // Particle Escapes Left
-							break;
-						else
-							x -= dist;
-					}
-					else
-					{
-						if( dist > 2.f - x ) // Particle Travels 1 -> 2
-						{
-							x = 2.f;
-							region = 2;
-							continue;
-						}
-						else
-							x += dist;
+						x = 2.f;
+						region = 2;
+						continue;
 					}
 				}
 				else
 				{
-					if( direction == 0 )
+					x += dist;
+					if( x > 6.f ) // Particle Escapes Left
+						break;
+					if( x < 2.f ) // Particle Travels 2 -> 1
 					{
-						if( dist > x - 2.f ) // Particle Travels 2 -> 1
-						{
-
-							x = 2.f;
-							region = 1;
-							continue;
-						}
-						else
-							x -= dist;
-					}
-					else
-					{
-						if( dist > 6.f - x ) // Particle Escapes Right
-							break;
-						else
-							x += dist;
+						x = 2.f;
+						region = 1;
+						continue;
 					}
 				}
-
 
 				// Sample Interaction
 				float interaction = (float) rand_r(&seed) / RAND_MAX * sigma_t;
@@ -140,8 +115,7 @@ int main(void)
 				else
 				{
 					particle_tally[(int) (x*(NBINS/6.f))]++;
-					for( int j = 0; j < 3; j++ )
-						direction[j] = rand_r(&seed) % 3 - 1; 
+					direction = (float) rand_r(&seed) / RAND_MAX * M_PI; 
 					n_collisions++;
 				}
 			}
