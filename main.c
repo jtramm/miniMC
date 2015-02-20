@@ -11,10 +11,12 @@ int main(void)
 {
 	unsigned int seed = time(NULL);
 
-	int n_particles = 100;
+	int n_particles = 1000;
 
 	int n_absorbed = 0;
 	int n_scattered = 0;
+
+	int bins[600] = {0};
 
 	// Loop over particles
 	for( int i = 0; i < n_particles; i++ )
@@ -99,10 +101,15 @@ int main(void)
 				break;
 			}
 			else
+			{
 				n_scattered++; // also need to tally x location
+				bins[(int) (x*100)]++;
+			}
 		}
 	}
 	printf("%d neutrons run. %d scattered\n", n_particles, n_scattered);
+	for( int i=0; i < 600; i++)
+		printf("%d ", bins[i]);
 
 	return 0;
 }
