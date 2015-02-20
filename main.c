@@ -9,6 +9,18 @@
 
 #define NBINS 1000
 
+float rn(unsigned long * seed)
+{
+    float ret;
+    unsigned long n1;
+    unsigned long a = 16807;
+    unsigned long m = 2147483647;
+    n1 = ( a * (*seed) ) % m;
+    *seed = n1;
+    ret = (float) n1 / m;
+    return ret;
+}
+
 void plot( int nbins, float * mean, float * variance )
 {
 	FILE * fp = fopen("data.dat", "w");
@@ -57,7 +69,7 @@ int main(void)
 		#endif
 		*/
 
-		unsigned int seed = 1337 + time(NULL) + omp_get_thread_num();
+		unsigned long seed = 1337 + time(NULL) + omp_get_thread_num();
 
 		#pragma omp for schedule(dynamic, 100)
 		// Loop over particles
@@ -69,14 +81,14 @@ int main(void)
 			int region;
 
 			// Birth Particle Location
-			x = ( (float) rand_r(&seed) / RAND_MAX ) * 2.f;
+			x = (float) rn(&seed) * 2.f;
 			if( x < 2.f )
 				region = 1;
 			else
 				region = 2;
 
 			// Birth Particle Direction
-			direction = (float) rand_r(&seed) / RAND_MAX * 2.f - 1.f; 
+			direction = rn(&seed) * 2.f - 1.f; 
 
 			while(1)
 			{
@@ -95,7 +107,7 @@ int main(void)
 				}
 
 				// Sample Flight Distance and Project onto X-axis
-				float dist = -logf( (float) rand_r(&seed) / RAND_MAX  ) / sigma_t;
+				float dist = -logf( rn(&seed) ) / sigma_t;
 				dist = dist * direction;
 
 				// Move Particle
@@ -125,13 +137,13 @@ int main(void)
 				}
 
 				// Sample Interaction
-				float interaction = (float) rand_r(&seed) / RAND_MAX * sigma_t;
+				float interaction = rn(&seed) * sigma_t;
 				if( interaction < sigma_a )
 					break;
 				else
 				{
 					particle_tally[(int) (x*(NBINS/6.f))]++;
-					direction = (float) rand_r(&seed) / RAND_MAX * 2.f - 1.f; 
+					direction = rn(&seed) * 2.f - 1.f; 
 					n_collisions++;
 				}
 			}

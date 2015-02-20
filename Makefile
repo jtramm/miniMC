@@ -1,4 +1,4 @@
-COMPILER    = intel
+COMPILER    = gnu
 
 # Standard Flags
 CFLAGS := -std=gnu99
