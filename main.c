@@ -7,7 +7,7 @@
 // Direction: 0 = left, 1 = right
 // Region: 1 = left, 2 = right
 
-#define NBINS 1000
+#define NBINS 10000
 
 void plot( int nbins, float * mean, float * variance )
 {
@@ -76,7 +76,7 @@ int main(void)
 				region = 2;
 
 			// Birth Particle Direction
-			direction = (float) rand_r(&seed) / RAND_MAX * M_PI; 
+			direction = (float) rand_r(&seed) / RAND_MAX * 2.f - 1.f; 
 
 			while(1)
 			{
@@ -96,7 +96,7 @@ int main(void)
 
 				// Sample Flight Distance and Project onto X-axis
 				float dist = -logf( (float) rand_r(&seed) / RAND_MAX  ) / sigma_t;
-				dist = dist * cosf(direction);
+				dist = dist * direction;
 
 				// Move Particle
 				if( region == 1 )
@@ -131,7 +131,7 @@ int main(void)
 				else
 				{
 					particle_tally[(int) (x*(NBINS/6.f))]++;
-					direction = (float) rand_r(&seed) / RAND_MAX * M_PI; 
+					direction = (float) rand_r(&seed) / RAND_MAX * 2.f - 1.f; 
 					n_collisions++;
 				}
 			}
