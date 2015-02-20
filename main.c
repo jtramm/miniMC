@@ -51,20 +51,19 @@ int main(void)
 			float x;
 			float direction;
 			int region;
-			int alive = 1;
 
 			// Birth Particle Location
-			x = ( (float) rand_r(&seed) / RAND_MAX ) * 6.f;
+			x = ( (float) rand_r(&seed) / RAND_MAX ) * 2.f;
 			if( x < 2.f )
 				region = 1;
 			else
 				region = 2;
 
-			while(alive)
-			{
-				// Sample Particle Direction
-				direction = rand_r(&seed) % 2; 
+			// Birth Particle Direction
+			direction = rand_r(&seed) % 2; 
 
+			while(1)
+			{
 				// Set XS's
 				float sigma_t;
 				float sigma_a;
@@ -88,10 +87,7 @@ int main(void)
 					if( direction == 0 )
 					{
 						if( dist > x ) // Particle Escapes Left
-						{
-							alive = 0;
 							break;
-						}
 						else
 							x -= dist;
 					}
@@ -124,10 +120,7 @@ int main(void)
 					else
 					{
 						if( dist > 6.f - x ) // Particle Escapes Right
-						{
-							alive = 0;
 							break;
-						}
 						else
 							x += dist;
 					}
@@ -137,13 +130,11 @@ int main(void)
 				// Sample Interaction
 				float interaction = (float) rand_r(&seed) / RAND_MAX * sigma_t;
 				if( interaction < sigma_a )
-				{
-					alive = 0;
 					break;
-				}
 				else
 				{
 					particle_tally[(int) (x*(NBINS/6.f))]++;
+					direction = rand_r(&seed) % 2; 
 					n_collisions++;
 				}
 			}
