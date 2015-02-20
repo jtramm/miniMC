@@ -7,7 +7,7 @@
 // Direction: 0 = left, 1 = right
 // Region: 1 = left, 2 = right
 
-#define NBINS 12
+#define NBINS 1000
 
 void plot( int nbins, float * mean, float * variance )
 {
@@ -16,7 +16,7 @@ void plot( int nbins, float * mean, float * variance )
 	for( int i = 0; i < nbins; i++ )
 	{
 		fprintf(fp, "%lf\t%lf\t%lf\t%lf\n",
-				6.0/nbins * i,
+				6.f/nbins * i,
 				mean[i],
 				mean[i] - variance[i]/2.f,
 				mean[i] + variance[i]/2.f );
@@ -26,8 +26,7 @@ void plot( int nbins, float * mean, float * variance )
 
 int main(void)
 {
-
-	long n_particles = 100;
+	long n_particles = 100000000;
 	int global_tally[NBINS] = {0};
 	int global_variance[NBINS] = {0};
 
@@ -35,7 +34,9 @@ int main(void)
 
 	double start = omp_get_wtime();
 
-	#pragma omp parallel default(none) shared(n_particles, global_tally, global_variance)  
+	long n_collisions = 0;
+
+	#pragma omp parallel default(none) shared(n_particles, global_tally, global_variance) reduction(+:n_collisions) 
 	{
 		int local_tally[NBINS] = {0};
 		int local_variance[NBINS] = {0};
@@ -133,7 +134,10 @@ int main(void)
 					break;
 				}
 				else
+				{
 					particle_tally[(int) (x*(NBINS/6.f))]++;
+					n_collisions++;
+				}
 			}
 
 			// Accumulate Tallies for Neutron history into Local running tally
@@ -147,10 +151,13 @@ int main(void)
 		}
 
 		// Global Accumulation of Tallies
-		for( int i = 0; i < NBINS; i++ )
+		#pragma omp critical
 		{
-			global_tally[i] = local_tally[i];
-			global_variance[i] = local_variance[i];
+			for( int i = 0; i < NBINS; i++ )
+			{
+				global_tally[i] += local_tally[i];
+				global_variance[i] += local_variance[i];
+			}
 		}
 	}
 
@@ -164,8 +171,6 @@ int main(void)
 		variance[i] = sqrtf( 1.f / (n_particles-1) * ( (float) global_variance[i] / n_particles - mean[i] * mean[i] )  ); 
 	}
 
-	//	for( int i = 0; i < NBINS; i ++ )
-	//		printf("Bin: %d\tMean: %f\tVariance: %f\n", i, mean[i], variance[i]);
 
 	double end = omp_get_wtime();
 
