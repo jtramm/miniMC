@@ -26,7 +26,7 @@ void plot( int nbins, float * mean, float * variance )
 
 int main(void)
 {
-	long n_particles = 1000000;
+	long n_particles = 10000000;
 	int global_tally[NBINS] = {0};
 	int global_variance[NBINS] = {0};
 
