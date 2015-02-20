@@ -7,7 +7,7 @@
 // Direction: 0 = left, 1 = right
 // Region: 1 = left, 2 = right
 
-#define NBINS 10000
+#define NBINS 1000
 
 void plot( int nbins, float * mean, float * variance )
 {
@@ -26,7 +26,7 @@ void plot( int nbins, float * mean, float * variance )
 
 int main(void)
 {
-	long n_particles = 1000000000;
+	long n_particles = 100000000;
 	int global_tally[NBINS] = {0};
 	int global_variance[NBINS] = {0};
 
