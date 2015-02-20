@@ -7,7 +7,22 @@
 // Direction: 0 = left, 1 = right
 // Region: 1 = left, 2 = right
 
-#define NBINS 600
+#define NBINS 12
+
+void plot( int nbins, float * mean, float * variance )
+{
+	FILE * fp = fopen("data.dat", "w");
+	fprintf(fp, "x\tmean\tmin\tmax\n");
+	for( int i = 0; i < nbins; i++ )
+	{
+		fprintf(fp, "%lf\t%lf\t%lf\t%lf\n",
+				6.0/nbins * i,
+				mean[i],
+				mean[i] - variance[i]/2.f,
+				mean[i] + variance[i]/2.f );
+	}
+	fclose(fp);
+}
 
 int main(void)
 {
@@ -118,7 +133,7 @@ int main(void)
 					break;
 				}
 				else
-					particle_tally[(int) (x*100)]++;
+					particle_tally[(int) (x*(NBINS/6.f))]++;
 			}
 
 			// Accumulate Tallies for Neutron history into Local running tally
@@ -141,6 +156,7 @@ int main(void)
 
 	float mean[NBINS] = {0};
 	float variance[NBINS] = {0};
+
 	// Compute statistics
 	for( int i = 0; i < NBINS; i++ )
 	{
@@ -156,6 +172,8 @@ int main(void)
 	printf("Neutrons:   %g\n", (float) n_particles);
 	printf("Runtime:    %.3lf seconds\n", end-start);
 	printf("Neutrons/s: %g\n", n_particles/(end-start));
+
+	plot( NBINS, mean, variance );
 
 	return 0;
 }
