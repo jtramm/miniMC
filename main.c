@@ -26,7 +26,7 @@ void plot( int nbins, float * mean, float * variance )
 
 int main(void)
 {
-	long n_particles = 1000000;
+	long n_particles = 1000000000;
 	int global_tally[NBINS] = {0};
 	int global_variance[NBINS] = {0};
 
@@ -43,7 +43,7 @@ int main(void)
 		int particle_tally[NBINS] = {0};
 		unsigned int seed = 1337 + time(NULL) + omp_get_thread_num();
 
-		#pragma omp for schedule(dynamic)
+		#pragma omp for schedule(dynamic, 100)
 		// Loop over particles
 		for( long i = 0; i < n_particles; i++ )
 		{
@@ -140,6 +140,7 @@ int main(void)
 			}
 
 			// Accumulate Tallies for Neutron history into Local running tally
+			#pragma simd
 			for( int j = 0; j < NBINS; j++ )
 			{
 				local_tally[j] += particle_tally[j];

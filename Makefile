@@ -1,4 +1,4 @@
 all:
-	gcc -std=gnu99 -O5 main.c -o miniMC -lm -fopenmp
+	icc -std=gnu99 -O3 -xhost -ansi-alias -no-prec-div main.c -o miniMC -lm -openmp
 clean:
 	rm -f miniMC
