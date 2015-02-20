@@ -10,7 +10,7 @@ LDFLAGS = -lm
 ifeq ($(COMPILER),gnu)
   CC = gcc
   LDFLAGS += -fopenmp
-  CFLAGS += -Ofast -ffast-math -ftree-vectorize -msse2
+  CFLAGS += -O5
 endif
 
 # intel Compiler
@@ -24,4 +24,8 @@ all:
 	$(CC) $(CFLAGS) main.c -o miniMC $(LDFLAGS)
 
 clean:
-	rm -f miniMC
+	rm -f miniMC data.dat
+run:
+	./miniMC
+graph:
+	gnuplot graph.gp
