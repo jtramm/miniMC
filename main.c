@@ -3,10 +3,6 @@
 #include <omp.h>
 #include <math.h>
 #include <time.h>
-
-// Direction: 0 = left, 1 = right
-// Region: 1 = left, 2 = right
-
 #define NBINS 1000
 
 float rn(unsigned long * seed);
@@ -14,49 +10,31 @@ void plot( int nbins, float * mean, float * variance );
 
 int main(void)
 {
-	long n_particles = 100000000;
-	int global_tally[NBINS] = {0};
+	long n_particles           = 100000000;
+	int global_tally[NBINS]    = {0};
 	int global_variance[NBINS] = {0};
-
+	long n_collisions          = 0;
+	double start               = omp_get_wtime();
 	omp_set_num_threads(omp_get_num_procs());
-
-	double start = omp_get_wtime();
-
-	long n_collisions = 0;
 
 	#pragma omp parallel default(none) \
 	shared(n_particles, global_tally, global_variance) \
 	reduction(+:n_collisions) 
 	{
 		// stack is faster for small # of bins
-		int local_tally[NBINS] = {0};
+		int local_tally[NBINS]    = {0};
 		int local_variance[NBINS] = {0};
 		int particle_tally[NBINS] = {0};
 
-		/*
-		#ifdef INTEL
-		int * local_tally = (int *) _mm_malloc( NBINS * sizeof(int), 64 );
-		memset(local_tally, 0, NBINS * sizeof(int));
-		int * local_variance = (int *) _mm_malloc( NBINS * sizeof(int), 64 );
-		memset(local_variance, 0, NBINS * sizeof(int));
-		int * particle_tally = (int *) _mm_malloc( NBINS * sizeof(int), 64 );
-		memset(particle_tally, 0, NBINS * sizeof(int));
-		#else
-		//int * local_tally = (int *) calloc( NBINS, sizeof(int) );
-		//int * local_variance = (int *) calloc( NBINS, sizeof(int) );
-		//int * particle_tally = (int *) calloc( NBINS, sizeof(int) );
-		#endif
-		*/
-
-		unsigned long seed = 1337 + time(NULL) + omp_get_thread_num();
+		// Intialize Seed
+		unsigned long seed = 1337 * time(NULL) + omp_get_thread_num();
 
 		#pragma omp for schedule(dynamic, 100)
 		// Loop over particles
 		for( long i = 0; i < n_particles; i++ )
 		{
 			// Particle State
-			float x;
-			float direction;
+			float x, direction;
 			int region;
 
 			// Birth Particle Location
@@ -154,16 +132,15 @@ int main(void)
 	for( int i = 0; i < NBINS; i++ )
 	{
 		mean[i] = (float) global_tally[i] / n_particles;
-		variance[i] = sqrtf( 1.f / (n_particles-1) * ( (float) global_variance[i] / n_particles - mean[i] * mean[i] )  ); 
+		variance[i] = sqrtf( 1.f / (n_particles-1) * 
+				( (float) global_variance[i] /
+				  n_particles - mean[i] * mean[i] )); 
 	}
 
-
 	double end = omp_get_wtime();
-
 	printf("Neutrons:   %g\n", (float) n_particles);
 	printf("Runtime:    %.3lf seconds\n", end-start);
 	printf("Neutrons/s: %g\n", n_particles/(end-start));
-
 	plot( NBINS, mean, variance );
 
 	return 0;
