@@ -93,17 +93,14 @@ int main(void)
 			while(1)
 			{
 				// Set XS's
-				float sigma_t;
-				float sigma_a;
+				float sigma_t, sigma_a;
 				if( region == 1 )
 				{
-					sigma_t = 1.f;
-					sigma_a = 0.5f;
+					sigma_t = 1.f; sigma_a = 0.5f;
 				}
 				else
 				{
-					sigma_t = 1.5f;
-					sigma_a = 1.2f;
+					sigma_t = 1.5f; sigma_a = 1.2f;
 				}
 
 				// Sample Flight Distance and Project onto X-axis
