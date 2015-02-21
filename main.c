@@ -9,32 +9,8 @@
 
 #define NBINS 1000
 
-float rn(unsigned long * seed)
-{
-    float ret;
-    unsigned long n1;
-    unsigned long a = 16807;
-    unsigned long m = 2147483647;
-    n1 = ( a * (*seed) ) % m;
-    *seed = n1;
-    ret = (float) n1 / m;
-    return ret;
-}
-
-void plot( int nbins, float * mean, float * variance )
-{
-	FILE * fp = fopen("data.dat", "w");
-	fprintf(fp, "x\tmean\tmin\tmax\n");
-	for( int i = 0; i < nbins; i++ )
-	{
-		fprintf(fp, "%lf\t%lf\t%lf\t%lf\n",
-				6.f/nbins * i,
-				mean[i],
-				mean[i] - variance[i]/2.f,
-				mean[i] + variance[i]/2.f );
-	}
-	fclose(fp);
-}
+float rn(unsigned long * seed);
+void plot( int nbins, float * mean, float * variance );
 
 int main(void)
 {
@@ -48,12 +24,15 @@ int main(void)
 
 	long n_collisions = 0;
 
-	#pragma omp parallel default(none) shared(n_particles, global_tally, global_variance) reduction(+:n_collisions) 
+	#pragma omp parallel default(none) \
+	shared(n_particles, global_tally, global_variance) \
+	reduction(+:n_collisions) 
 	{
 		// stack is faster for small # of bins
 		int local_tally[NBINS] = {0};
 		int local_variance[NBINS] = {0};
 		int particle_tally[NBINS] = {0};
+
 		/*
 		#ifdef INTEL
 		int * local_tally = (int *) _mm_malloc( NBINS * sizeof(int), 64 );
@@ -188,4 +167,31 @@ int main(void)
 	plot( NBINS, mean, variance );
 
 	return 0;
+}
+
+float rn(unsigned long * seed)
+{
+    float ret;
+    unsigned long n1;
+    unsigned long a = 16807;
+    unsigned long m = 2147483647;
+    n1 = ( a * (*seed) ) % m;
+    *seed = n1;
+    ret = (float) n1 / m;
+    return ret;
+}
+
+void plot( int nbins, float * mean, float * variance )
+{
+	FILE * fp = fopen("data.dat", "w");
+	fprintf(fp, "x\tmean\tmin\tmax\n");
+	for( int i = 0; i < nbins; i++ )
+	{
+		fprintf(fp, "%lf\t%lf\t%lf\t%lf\n",
+				6.f/nbins * i,
+				mean[i],
+				mean[i] - variance[i]/2.f,
+				mean[i] + variance[i]/2.f );
+	}
+	fclose(fp);
 }
