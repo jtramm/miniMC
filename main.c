@@ -29,8 +29,8 @@ int main(void)
 		// Intialize Seed
 		unsigned long seed = 1337 * time(NULL) + omp_get_thread_num();
 
-		#pragma omp for schedule(dynamic, 100)
 		// Loop over particles
+		#pragma omp for schedule(dynamic, 100)
 		for( long i = 0; i < n_particles; i++ )
 		{
 			// Particle State
@@ -47,6 +47,7 @@ int main(void)
 			// Birth Particle Direction
 			direction = rn(&seed) * 2.f - 1.f; 
 
+			// Particle Tracking Loop
 			while(1)
 			{
 				// Set XS's
@@ -139,6 +140,7 @@ int main(void)
 
 	double end = omp_get_wtime();
 	printf("Neutrons:   %g\n", (float) n_particles);
+	printf("Collisions: %ld\n", n_collisions); 
 	printf("Runtime:    %.3lf seconds\n", end-start);
 	printf("Neutrons/s: %g\n", n_particles/(end-start));
 	plot( NBINS, mean, variance );
