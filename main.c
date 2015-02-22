@@ -128,6 +128,7 @@ int main(void)
 
 	float mean[NBINS] = {0};
 	float variance[NBINS] = {0};
+	float phi[NBINS] = {0};
 
 	// Compute statistics
 	for( int i = 0; i < NBINS; i++ )
@@ -138,12 +139,22 @@ int main(void)
 				  n_particles - mean[i] * mean[i] )); 
 	}
 
+	// Compute Phi
+	for( int i = 0; i < NBINS; i++ )
+	{
+		float V = 6.f / NBINS;
+		if( V * i < 2.f )
+			phi[i] = mean[i] * 1.f / V;
+		else
+			phi[i] = mean[i] * 1.f / ( V * 1.5 );
+	}
+
 	double end = omp_get_wtime();
 	printf("Neutrons:   %g\n", (float) n_particles);
 	printf("Collisions: %ld\n", n_collisions); 
 	printf("Runtime:    %.3lf seconds\n", end-start);
 	printf("Neutrons/s: %g\n", n_particles/(end-start));
-	plot( NBINS, mean, variance );
+	plot( NBINS, phi, variance );
 
 	return 0;
 }
