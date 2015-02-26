@@ -183,10 +183,10 @@ void plot( int nbins, float * mean, float * variance )
 	fprintf(fp_var, "x\tvariance\n");
 	for( int i = 0; i < nbins; i++ )
 	{
-		fprintf(fp_rr, "%lf\t%lf\n",
+		fprintf(fp_rr, "%e\t%e\n",
 				6.f/nbins * i,
 				mean[i]);
-		fprintf(fp_var, "%lf\t%lf\n",
+		fprintf(fp_var, "%e\t%e\n",
 				6.f/nbins * i,
 				variance[i]);
 	}

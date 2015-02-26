@@ -24,7 +24,7 @@ all:
 	$(CC) $(CFLAGS) main.c -o miniMC $(LDFLAGS)
 
 clean:
-	rm -f miniMC data.dat
+	rm -f miniMC reaction_rate.dat variance.dat
 run:
 	./miniMC
 graph:
