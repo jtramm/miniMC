@@ -10,7 +10,7 @@ void plot( int nbins, float * mean, float * variance );
 
 int main(void)
 {
-	long n_particles           = 10000000;
+	long n_particles           = 100000000;
 	int global_tally[NBINS]    = {0};
 	int global_variance[NBINS] = {0};
 	long n_collisions          = 0;
