@@ -160,6 +160,8 @@ int main(void)
 	return 0;
 }
 
+// Park & Miller LCG from
+// Numerical Recipes Vol. 2
 float rn(unsigned long * seed)
 {
     float ret;
@@ -174,16 +176,20 @@ float rn(unsigned long * seed)
 
 void plot( int nbins, float * mean, float * variance )
 {
-	printf("writing data to \"data.dat\"...\n");
-	FILE * fp = fopen("data.dat", "w");
-	fprintf(fp, "x\tmean\tmin\tmax\n");
+	printf("writing data to files...\n");
+	FILE * fp_rr = fopen("reaction_rate.dat", "w");
+	FILE * fp_var = fopen("variance.dat", "w");
+	fprintf(fp_rr, "x\tmean\n");
+	fprintf(fp_var, "x\tvariance\n");
 	for( int i = 0; i < nbins; i++ )
 	{
-		fprintf(fp, "%lf\t%lf\t%lf\t%lf\n",
+		fprintf(fp_rr, "%lf\t%lf\n",
 				6.f/nbins * i,
-				mean[i],
-				mean[i] - variance[i]/2.f,
-				mean[i] + variance[i]/2.f );
+				mean[i]);
+		fprintf(fp_var, "%lf\t%lf\n",
+				6.f/nbins * i,
+				variance[i]);
 	}
-	fclose(fp);
+	fclose(fp_rr);
+	fclose(fp_var);
 }
