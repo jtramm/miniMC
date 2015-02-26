@@ -10,12 +10,14 @@ void plot( int nbins, float * mean, float * variance );
 
 int main(void)
 {
-	long n_particles           = 100000000;
+	long n_particles           = 10000000;
 	int global_tally[NBINS]    = {0};
 	int global_variance[NBINS] = {0};
 	long n_collisions          = 0;
 	double start               = omp_get_wtime();
 	omp_set_num_threads(omp_get_num_procs());
+	printf("Simulating %e particles in %d bins...\n", (float) n_particles,
+			NBINS);
 	printf("Beginning simulation on %d threads...\n", omp_get_num_procs());
 
 	#pragma omp parallel default(none) \

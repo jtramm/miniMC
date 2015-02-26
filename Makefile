@@ -28,6 +28,6 @@ clean:
 run:
 	./miniMC
 graph:
-	gnuplot graph.gp
+	gnuplot reaction_rate.gp; gnuplot variance.gp
 edit:
 	vim main.c
