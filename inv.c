@@ -1,3 +1,5 @@
+// 22.211 PSET 1 - Problem 2 - Distribution Verification Code
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
