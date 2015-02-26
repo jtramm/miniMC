@@ -1,3 +1,4 @@
+# Set compuler choice (gnu or intel)
 COMPILER    = gnu
 
 # Standard Flags

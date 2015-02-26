@@ -1,3 +1,6 @@
+// 22.211 PSet 1 - Problem 3 - Monte Carlo Slab
+// John Tramm
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
