@@ -174,6 +174,7 @@ float rn(unsigned long * seed)
 
 void plot( int nbins, float * mean, float * variance )
 {
+	printf("writing data to \"data.dat\"...\n");
 	FILE * fp = fopen("data.dat", "w");
 	fprintf(fp, "x\tmean\tmin\tmax\n");
 	for( int i = 0; i < nbins; i++ )
