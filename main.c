@@ -16,6 +16,7 @@ int main(void)
 	long n_collisions          = 0;
 	double start               = omp_get_wtime();
 	omp_set_num_threads(omp_get_num_procs());
+	printf("Beginning simulation on %d threads...\n", omp_get_num_procs());
 
 	#pragma omp parallel default(none) \
 	shared(n_particles, global_tally, global_variance) \
