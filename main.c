@@ -16,7 +16,7 @@ int main(void)
 	long n_collisions          = 0;
 	double start               = omp_get_wtime();
 	omp_set_num_threads(omp_get_num_procs());
-	printf("Simulating %e particles in %d bins...\n", (float) n_particles,
+	printf("Simulating %.2e particles in %d bins...\n", (float) n_particles,
 			NBINS);
 	printf("Beginning simulation on %d threads...\n", omp_get_num_procs());
 
