@@ -8,10 +8,9 @@ int find_u_bin(double E, double Eo, double kill, double source_E)
 	double high = log(Eo/kill);
 
 	double u = log(Eo/E);
-	double val = u / (high-low);
+	double val = (u-low) / (high-low);
 
 	int bin = val * NBINS;
-	printf("BIN #%d\n", bin);
 	return bin;
 }
 
@@ -19,15 +18,11 @@ double find_u_bin_u(int i, double Eo, double kill, double source_E)
 {
 	double low = log(Eo/source_E);
 	double high = log(Eo/kill);
-
 	double del = (high-low)/NBINS;
-
 	double bin = low+ i*del;
-
 	return bin;
 }
 
-/*
 void print_flux(double Eo, double kill, double source_E, double * flux)
 {
 	FILE *fp = fopen("data.dat", "w");
@@ -36,7 +31,6 @@ void print_flux(double Eo, double kill, double source_E, double * flux)
 		fprintf(fp, "%e\t%e\n", find_u_bin_u(i,Eo,kill,source_E),flux[i]);
 	fclose(fp);
 }
-*/
 
 
 int main(int argc, char * argv[])
@@ -45,13 +39,13 @@ int main(int argc, char * argv[])
 		omp_set_num_threads(atoi(argv[1]));
 
 	double source_E = 250;
-	int np = 1000;
+	int np = 100000;
 	double temp = 300;
 	double Eo = 1000; // Lethargy Reference
 	int nr;
 	Resonance * R = res_read(&nr);
 	nr = 3;
-	double HtoU = 1;
+	double HtoU = 10;
 	XS h1 = {0.0, 0.0, 20.0, 20.0};
 	double start = omp_get_wtime();
 	double kill = 0.025;
@@ -145,8 +139,9 @@ int main(int argc, char * argv[])
 	} // Exit Parallel Region
 
 	double end = omp_get_wtime();
-	//print_flux(Eo, kill, source_E, flux);
+	print_flux(Eo, kill, source_E, flux);
 	printf("Threads: %d\n", omp_get_max_threads());
+	printf("Particles: %.2e\n", (double) np);
 	printf("Time = %.2lf sec\n", end-start);
 	printf("Particles per second = %.2e\n", np / (end-start));
 	// Compute Resonance Escape Probability
