@@ -31,11 +31,15 @@ typedef struct{
 	double temp;                         // Temperature
 	Resonance * R;                // Resonances
 	int nr;                             // Number of Resonances
-} Variables;
+} Input;
 
 Resonance * res_read(int * n_resonances);
 double complex FNF( double complex Z );
 XS calculate_XS( double E, double temp, Resonance * R, int nr );
 void res_out( XS * xs, int gp );
 void graph_driver(void);
+int find_u_bin(double E, Input input);
+double find_u_bin_u(int i, Input input);
+void print_flux(Input input, double * flux);
+void tally( double E, Input input, double * flux, double * group, double Sigma_t );
 #endif
