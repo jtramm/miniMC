@@ -13,6 +13,28 @@ int find_u_bin(double E, double Eo, double kill, double source_E)
 	int bin = val * NBINS;
 }
 
+double find_u_bin_E(int i, double Eo, double kill, double source_E)
+{
+	double low = log(Eo/source_E);
+	double high = log(Eo/kill);
+
+	double del = (high-low)/NBINS;
+
+	int bin = i*NBINS;
+
+	return bin;
+}
+
+void print_flux(double Eo, double kill, double source_E, double * flux)
+{
+	FILE *fp = fopen("data.dat", "w");
+
+	for(int i = 0; i < NBINS; i++ )
+		fprintf(fp, "%e\t%e\n", find_u_bin_E(i,Eo,kill,source_E),flux[i]);
+	fclose(fp);
+}
+
+
 int main(int argc, char * argv[])
 {
 	if( argc == 2 )
@@ -30,24 +52,25 @@ int main(int argc, char * argv[])
 	double start = omp_get_wtime();
 	double kill = 0.025;
 
+	double flux[NBINS] = {0};
+
 	int escapes = 0;
 	#pragma omp parallel default (none) \
-	shared(np, temp, nr, R, HtoU, h1, source_E) \
+	shared(np, temp, nr, R, HtoU, h1, source_E, kill, Eo, flux) \
 	reduction(+:escapes)
 	{
 		unsigned seed = (omp_get_thread_num()+1)*time(NULL) +1337;
-		double flux[NBINS];
+		double local_flux[NBINS];
 
 		#pragma omp for schedule(dynamic, 10)
 		for( int i = 0; i < np; i++ )
 		{
-			// Particle Born @ 250 eV
 			double E = source_E;
 
 			while(1)
 			{
 				// Kill Particle once it clears Resonances
-				if( E < 0.6 )
+				if( E < kill )
 				{
 					escapes++;
 					break;
@@ -73,6 +96,8 @@ int main(int argc, char * argv[])
 					if( r <= u238.sigma_g ) // Absorption
 					{
 						// Tally
+						int bin = find_u_bin(E,Eo,kill,source_E);
+						local_flux[bin] += 1/Sigma_t;
 
 						// Neutron Death
 						break;
@@ -87,6 +112,9 @@ int main(int argc, char * argv[])
 						E = r*delta + lowE;
 
 						// Flux Tally
+						// Tally
+						int bin = find_u_bin(E,Eo,kill,source_E);
+						local_flux[bin] += 1/Sigma_t;
 					}
 				}
 				else // H1 Scatter
@@ -96,14 +124,24 @@ int main(int argc, char * argv[])
 					E = r*E;
 
 					// Flux Tally
+					int bin = find_u_bin(E,Eo,kill,source_E);
+					local_flux[bin] += 1/Sigma_t;
 				}
 
 			} // Neutron Life Loop
 
 		}// Particles Loop
+
+		// Accumulate Flux
+		#pragma omp critical
+		{
+			for( int i = 0; i < NBINS; i++ )
+				flux[i] += local_flux[i];
+		}
 	} // Exit Parallel Region
 
 	double end = omp_get_wtime();
+	print_flux(Eo, kill, source_E, flux);
 	printf("Threads: %d\n", omp_get_max_threads());
 	printf("Time = %.2lf sec\n", end-start);
 	printf("Particles per second = %.2e\n", np / (end-start));
