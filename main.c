@@ -10,29 +10,29 @@ int main(int argc, char * argv[])
 	XS h1 = {0.0, 0.0, 20.0, 20.0};
 
 	double flux[NBINS] = {0};
-	double group[3] = {0};
+	long Ra[NBINS] = {0};
 
 	Input input;
-	input.np = 10000000;                      // Number of Particles
-	input.HtoU = 10;                          // H1 to U-238
-	input.Eo = 1000;                          // Lethargy Reference E
-	input.kill = 0.025;                       // Kill Energy
-	input.source_E = 250;                     // Source Energy
-	input.low_u = log(input.Eo/input.source_E);       // Lethargy Low End
-	input.delta = log(input.Eo/input.kill) - input.low_u; // Lethargy Domain
-	input.temp = 300;                         // Temperature
-	input.R = res_read(&input.nr);                // Resonances
-	input.nr = 3;                             // Number of Resonances
+	input.np = 10000000;                        // Number of Particles
+	input.HtoU = 10;                            // H1 to U-238
+	input.Eo = 1000;                            // Lethargy Reference E
+	input.kill = 0.025;                         // Kill Energy
+	input.source_E = 250;                       // Source Energy
+	input.low_u = log(input.Eo/input.source_E); // Lethargy Low End
+	input.delta_u = log(input.Eo/input.kill) - input.low_u; // Lethargy Domain
+	input.temp = 300;                           // Temperature
+	input.R = res_read(&input.nr);              // Resonances
+	input.nr = 3;                               // Number of Resonances
 
 	int escapes = 0;
 	double start = omp_get_wtime();
 	#pragma omp parallel default (none) \
-	shared(input, h1, flux, group) \
+	shared(input, h1, flux, Ra) \
 	reduction(+:escapes)
 	{
 		unsigned seed = (omp_get_thread_num()+1)*time(NULL) +1337;
 		double local_flux[NBINS] = {0};
-		double local_group[3] = {0};
+		long local_Ra[NBINS] = {0};
 
 		#pragma omp for schedule(dynamic, 10)
 		for( int i = 0; i < input.np; i++ )
@@ -65,13 +65,13 @@ int main(int argc, char * argv[])
 					r *= u238.sigma_t;
 					if( r <= u238.sigma_g ) // Absorption
 					{
-						tally(E, input, local_flux, local_group, Sigma_t);
+						abs_tally(E, input, local_flux, local_Ra, Sigma_t);
 						// Neutron Death
 						break;
 					}
 					else // Elastic Scatter
 					{
-						tally(E, input, local_flux, local_group, Sigma_t);
+						tally(E, input, local_flux, Sigma_t);
 						// Scatter
 						double alpha = 0.9833336251;
 						double lowE = alpha*E;
@@ -83,7 +83,7 @@ int main(int argc, char * argv[])
 				}
 				else // H1 Scatter
 				{
-					tally(E, input, local_flux, local_group, Sigma_t);
+					tally(E, input, local_flux, Sigma_t);
 					// Sample New Energy
 					r = (double) rand_r(&seed) / RAND_MAX;
 					E = r*E;
@@ -95,9 +95,10 @@ int main(int argc, char * argv[])
 		#pragma omp critical
 		{
 			for( int i = 0; i < NBINS; i++ )
+			{
 				flux[i] += local_flux[i]/input.np;
-			for( int i = 0; i < 3; i++ )
-				group[i] += local_group[i]/input.np;
+				Ra[i] += local_Ra[i]/input.np;
+			}
 		}
 	} // Exit Parallel Region
 
@@ -109,24 +110,32 @@ int main(int argc, char * argv[])
 	printf("Particles per second = %.2e\n", input.np / (end-start));
 	// Compute Resonance Escape Probability
 	printf("Resonance Escape Probability = %.2lf%%\n",(double)escapes/input.np * 100.0);
-	for( int i = 0; i < 3; i++ )
-		printf("Group %d XS: %lf\n", i, (double) group[i]);
 	return 0;
 }
 
 int find_u_bin(double E, Input input)
 {
 	double u = log(input.Eo/E);
-	double val = (u-input.low_u) / (input.delta);
+	double val = (u-input.low_u) / (input.delta_u);
 	int bin = val * NBINS;
 	return bin;
 }
 
+int find_E_bin(double E, Input input)
+{
+	return (E / input.source_E) * NBINS;
+}
+
 double find_u_bin_u(int i, Input input)
 {
-	double del = (input.delta)/NBINS;
+	double del = (input.delta_u)/NBINS;
 	double bin = input.low_u + i*del;
 	return bin;
+}
+
+double find_E_bin_E(int i, Input input)
+{
+	return (input.source_E / NBINS) * i;
 }
 
 void print_flux(Input input, double * flux)
@@ -138,17 +147,18 @@ void print_flux(Input input, double * flux)
 	fclose(fp);
 }
 
-void tally( double E, Input input, double * flux, double * group, double Sigma_t )
+void tally( double E, Input input, double * flux, double Sigma_t )
 {
 	// Flux Tally
 	int bin = find_u_bin(E,input);
 	flux[bin] += 1.0/Sigma_t;
+}
 
+void abs_tally( double E, Input input, double * flux, long * Ra, double Sigma_t )
+{
+	int bin = find_u_bin(E,input);
+	// Flux Tally
+	flux[bin] += 1.0/Sigma_t;
 	// Group XS Tally
-	if( E > 6.0 && E <= 10.0 )
-		group[0] += 1.0/Sigma_t;
-	else if ( E > 10.0 && E <= 25.0 )
-		group[1] += 1.0/Sigma_t;
-	else if ( E > 25.0 && E <= 50.0 )
-		group[2] += 1.0/Sigma_t;
+	Ra[bin]++;;
 }
