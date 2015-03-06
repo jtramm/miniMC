@@ -3,6 +3,7 @@
 #include<math.h>
 #include<complex.h>
 #include<time.h>
+#include<omp.h>
 
 typedef struct{
 	double Eo;

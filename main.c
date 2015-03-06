@@ -1,82 +1,96 @@
 #include"minimc_header.h"
 
-
-int main(void)
+int main(int argc, char * argv[])
 {
-	int np = 1000;
+	if( argc == 2 )
+		omp_set_num_threads(atoi(argv[1]));
+
+	int np = 1000000;
 	double temp = 300;
 	int nr;
 	Resonance * R = res_read(&nr);
-	double HtoU = 100000;
+	nr = 30;
+	double HtoU = 10;
 	XS h1 = {0.0, 0.0, 20.0, 20.0};
-
-	unsigned seed = time(NULL) +1337;
+	double start = omp_get_wtime();
 
 	int escapes = 0;
-
-	for( int i = 0; i < np; i++ )
+	#pragma omp parallel default (none) shared(np, temp, nr, R, HtoU, h1) \
+	reduction(+:escapes)
 	{
-		// Particle Born @ 250 eV
-		double E = 250;
+		unsigned seed = (omp_get_thread_num()+1)*time(NULL) +1337;
 
-		while(1)
+		#pragma omp for schedule(dynamic, 10)
+		for( int i = 0; i < np; i++ )
 		{
-			// Kill Particle once it clears Resonances
-			if( E < 0.025 )
+			// Particle Born @ 250 eV
+			double E = 250;
+
+			while(1)
 			{
-				escapes++;
-				break;
-			}
-
-			// Travel some distance (don't care)
-
-			// Get XS's
-			XS u238 = calculate_XS( E, temp, R, nr );
-
-			// Calculate total XS
-			double Sigma_t = u238.sigma_t + HtoU * h1.sigma_t;
-
-			// Sample Collision Nucleus
-			double r = (double) rand_r(&seed) / RAND_MAX;
-			r *= Sigma_t;
-
-			if( r <= sigma_t.u238 ) // U-238 collision
-			{
-				// Sample Collison Type
-				r = (double) rand_r(&seed) / RAND_MAX;
-				r *= u238.sigma_t;
-				if( r <= u238.sigma_g ) // Absorption
+				// Kill Particle once it clears Resonances
+				if( E < 0.6 )
 				{
-					// Tally
-
-					// Neutron Death
+					escapes++;
 					break;
 				}
-				else // Elastic Scatter
+
+				// Travel some distance (don't care)
+
+				// Get XS's
+				XS u238 = calculate_XS( E, temp, R, nr );
+
+				// Calculate total XS
+				double Sigma_t = u238.sigma_t + HtoU * h1.sigma_t;
+
+				// Sample Collision Nucleus
+				double r = (double) rand_r(&seed) / RAND_MAX;
+				r *= Sigma_t;
+
+				if( r <= u238.sigma_t ) // U-238 collision
 				{
-					// Scatter
-					double alpha = 0.9833336251;
-					double lowE = alpha*E;
-					double delta = E - lowE;
+					// Sample Collison Type
 					r = (double) rand_r(&seed) / RAND_MAX;
-					E = r*delta + lowE;
+					r *= u238.sigma_t;
+					if( r <= u238.sigma_g ) // Absorption
+					{
+						// Tally
+
+						// Neutron Death
+						break;
+					}
+					else // Elastic Scatter
+					{
+						// Scatter
+						double alpha = 0.9833336251;
+						double lowE = alpha*E;
+						double delta = E - lowE;
+						r = (double) rand_r(&seed) / RAND_MAX;
+						E = r*delta + lowE;
+
+						// Flux Tally
+					}
+				}
+				else // H1 Scatter
+				{
+					// Sample New Energy
+					r = (double) rand_r(&seed) / RAND_MAX;
+					E = r*E;
 
 					// Flux Tally
 				}
-			}
-			else // H1 Scatter
-			{
-				// Sample New Energy
-				r = (double) rand_r(&seed) / RAND_MAX;
-				E = r*E;
 
-				// Flux Tally
-			}
+			} // Neutron Life Loop
 
-		} // Neutron Life Loop
+		}// Particles Loop
+	} // Exit Parallel Region
 
-	}// Particles Loop
-}
+	double end = omp_get_wtime();
+	printf("Threads: %d\n", omp_get_max_threads());
+	printf("Time = %.2lf sec\n", end-start);
+	printf("Particles per second = %.2e\n", np / (end-start));
+	// Compute Resonance Escape Probability
+	printf("Resonance Escape Probability = %.2lf%%\n",(double)escapes/np * 100.0);
 
-return 0;
+	return 0;
 }

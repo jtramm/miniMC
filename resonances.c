@@ -17,8 +17,7 @@ XS calculate_XS( double E, double temp, Resonance * R, int nr )
 		double xi = T * sqrt(A / (4.0 * k * temp * R[j].Eo));
 		double complex faddeeva_in = x + I;
 		faddeeva_in *= xi;
-		//double complex faddeeva_out = xi * FNF( faddeeva_in);
-		double complex faddeeva_out = xi * Faddeeva_w( faddeeva_in, 0.0);
+		double complex faddeeva_out = xi * FNF( faddeeva_in);
 		double psi = sqrt(M_PI) * creal(faddeeva_out); 
 		double chi = sqrt(M_PI) * cimag(faddeeva_out);
 		xs.sigma_g += R[j].Tn * R[j].Tg / (T*T) * sqrt(R[j].Eo / E) * r * psi;
