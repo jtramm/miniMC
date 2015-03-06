@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<math.h>
 #include<complex.h>
+#include<time.h>
 
 typedef struct{
 	double Eo;
