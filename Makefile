@@ -42,4 +42,4 @@ run:
 graph:
 	gnuplot graph.gp
 edit:
-	vim -p $(source)
+	vim -p $(source) minimc_header.h
