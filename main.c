@@ -32,6 +32,22 @@ void print_flux(double Eo, double kill, double source_E, double * flux)
 	fclose(fp);
 }
 
+void tally( double E, double Eo, double kill, double source_E,
+		double * flux, double * group, double Sigma_t )
+{
+	// Flux Tally
+	int bin = find_u_bin(E,Eo,kill,source_E);
+	flux[bin] += 1.0/Sigma_t;
+
+	// Group XS Tally
+	if( E > 6.0 && E <= 10.0 )
+		group[0] += 1.0/Sigma_t;
+	else if ( E > 10.0 && E <= 25.0 )
+		group[1] += 1.0/Sigma_t;
+	else if ( E > 25.0 && E <= 50.0 )
+		group[2] += 1.0/Sigma_t;
+}
+
 
 int main(int argc, char * argv[])
 {
@@ -39,7 +55,7 @@ int main(int argc, char * argv[])
 		omp_set_num_threads(atoi(argv[1]));
 
 	double source_E = 250;
-	int np = 100000;
+	int np = 10000000;
 	double temp = 300;
 	double Eo = 1000; // Lethargy Reference
 	int nr;
@@ -51,14 +67,16 @@ int main(int argc, char * argv[])
 	double kill = 0.025;
 
 	double flux[NBINS] = {0};
+	double group[3] = {0};
 
 	int escapes = 0;
 	#pragma omp parallel default (none) \
-	shared(np, temp, nr, R, HtoU, h1, source_E, kill, Eo, flux) \
+	shared(np, temp, nr, R, HtoU, h1, source_E, kill, Eo, flux, group) \
 	reduction(+:escapes)
 	{
 		unsigned seed = (omp_get_thread_num()+1)*time(NULL) +1337;
 		double local_flux[NBINS] = {0};
+		double local_group[3] = {0};
 
 		#pragma omp for schedule(dynamic, 10)
 		for( int i = 0; i < np; i++ )
@@ -91,17 +109,13 @@ int main(int argc, char * argv[])
 					r *= u238.sigma_t;
 					if( r <= u238.sigma_g ) // Absorption
 					{
-						// Flux Tally
-						int bin = find_u_bin(E,Eo,kill,source_E);
-						local_flux[bin] += 1.0/Sigma_t;
+						tally(E, Eo, kill, source_E, local_flux, local_group, Sigma_t);
 						// Neutron Death
 						break;
 					}
 					else // Elastic Scatter
 					{
-						// Flux Tally
-						int bin = find_u_bin(E,Eo,kill,source_E);
-						local_flux[bin] += 1.0/Sigma_t;
+						tally(E, Eo, kill, source_E, local_flux, local_group, Sigma_t);
 						// Scatter
 						double alpha = 0.9833336251;
 						double lowE = alpha*E;
@@ -113,9 +127,7 @@ int main(int argc, char * argv[])
 				}
 				else // H1 Scatter
 				{
-					// Flux Tally
-					int bin = find_u_bin(E,Eo,kill,source_E);
-					local_flux[bin] += 1.0/Sigma_t;
+					tally(E, Eo, kill, source_E, local_flux, local_group, Sigma_t);
 					// Sample New Energy
 					r = (double) rand_r(&seed) / RAND_MAX;
 					E = r*E;
@@ -128,6 +140,8 @@ int main(int argc, char * argv[])
 		{
 			for( int i = 0; i < NBINS; i++ )
 				flux[i] += local_flux[i]/np;
+			for( int i = 0; i < 3; i++ )
+				group[i] += local_group[i]/np;
 		}
 	} // Exit Parallel Region
 
@@ -139,6 +153,7 @@ int main(int argc, char * argv[])
 	printf("Particles per second = %.2e\n", np / (end-start));
 	// Compute Resonance Escape Probability
 	printf("Resonance Escape Probability = %.2lf%%\n",(double)escapes/np * 100.0);
-
+	for( int i = 0; i < 3; i++ )
+		printf("Group %d XS: %lf\n", i, (double) group[i]);
 	return 0;
 }
