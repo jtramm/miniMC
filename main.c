@@ -74,8 +74,6 @@ int main(int argc, char * argv[])
 					break;
 				}
 
-				// Travel some distance (don't care)
-
 				// Get XS's
 				XS u238 = calculate_XS( E, temp, R, nr );
 
@@ -93,17 +91,15 @@ int main(int argc, char * argv[])
 					r *= u238.sigma_t;
 					if( r <= u238.sigma_g ) // Absorption
 					{
-						// Tally
+						// Flux Tally
 						int bin = find_u_bin(E,Eo,kill,source_E);
 						local_flux[bin] += 1.0/Sigma_t;
-
 						// Neutron Death
 						break;
 					}
 					else // Elastic Scatter
 					{
 						// Flux Tally
-						// Tally
 						int bin = find_u_bin(E,Eo,kill,source_E);
 						local_flux[bin] += 1.0/Sigma_t;
 						// Scatter
@@ -123,18 +119,15 @@ int main(int argc, char * argv[])
 					// Sample New Energy
 					r = (double) rand_r(&seed) / RAND_MAX;
 					E = r*E;
-
 				}
-
 			} // Neutron Life Loop
-
 		}// Particles Loop
 
 		// Accumulate Flux
 		#pragma omp critical
 		{
 			for( int i = 0; i < NBINS; i++ )
-				flux[i] += local_flux[i];
+				flux[i] += local_flux[i]/np;
 		}
 	} // Exit Parallel Region
 
