@@ -1,12 +1,16 @@
 #include"minimc_header.h"
 
+#define NBINS 1000;
+
 int main(int argc, char * argv[])
 {
 	if( argc == 2 )
 		omp_set_num_threads(atoi(argv[1]));
 
-	int np = 1000000;
+	double particle_source_E = 250;
+	int np = 1000;
 	double temp = 300;
+	double Eo = 1000000; // Lethargy Reference
 	int nr;
 	Resonance * R = res_read(&nr);
 	nr = 30;
@@ -15,16 +19,26 @@ int main(int argc, char * argv[])
 	double start = omp_get_wtime();
 
 	int escapes = 0;
-	#pragma omp parallel default (none) shared(np, temp, nr, R, HtoU, h1) \
+	#pragma omp parallel default (none) \
+	shared(np, temp, nr, R, HtoU, h1, partile_source_E) \
 	reduction(+:escapes)
 	{
 		unsigned seed = (omp_get_thread_num()+1)*time(NULL) +1337;
+
+		double u_grid[NBINS];
+		double flux[NBINS];
+		for( int i = 0; i < NBINS; i++ )
+		{
+			double bot = log( Eo / particle_source_E ); 
+			double del = bot / NBINS;
+			u_grid[i] = bot + i*del;
+		}
 
 		#pragma omp for schedule(dynamic, 10)
 		for( int i = 0; i < np; i++ )
 		{
 			// Particle Born @ 250 eV
-			double E = 250;
+			double E = particle_source_E;
 
 			while(1)
 			{
