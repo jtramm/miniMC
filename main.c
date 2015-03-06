@@ -11,28 +11,32 @@ int find_u_bin(double E, double Eo, double kill, double source_E)
 	double val = u / (high-low);
 
 	int bin = val * NBINS;
+	printf("BIN #%d\n", bin);
+	return bin;
 }
 
-double find_u_bin_E(int i, double Eo, double kill, double source_E)
+double find_u_bin_u(int i, double Eo, double kill, double source_E)
 {
 	double low = log(Eo/source_E);
 	double high = log(Eo/kill);
 
 	double del = (high-low)/NBINS;
 
-	int bin = i*NBINS;
+	double bin = low+ i*del;
 
 	return bin;
 }
 
+/*
 void print_flux(double Eo, double kill, double source_E, double * flux)
 {
 	FILE *fp = fopen("data.dat", "w");
 
 	for(int i = 0; i < NBINS; i++ )
-		fprintf(fp, "%e\t%e\n", find_u_bin_E(i,Eo,kill,source_E),flux[i]);
+		fprintf(fp, "%e\t%e\n", find_u_bin_u(i,Eo,kill,source_E),flux[i]);
 	fclose(fp);
 }
+*/
 
 
 int main(int argc, char * argv[])
@@ -43,11 +47,11 @@ int main(int argc, char * argv[])
 	double source_E = 250;
 	int np = 1000;
 	double temp = 300;
-	double Eo = 1000000; // Lethargy Reference
+	double Eo = 1000; // Lethargy Reference
 	int nr;
 	Resonance * R = res_read(&nr);
-	nr = 30;
-	double HtoU = 10;
+	nr = 3;
+	double HtoU = 1;
 	XS h1 = {0.0, 0.0, 20.0, 20.0};
 	double start = omp_get_wtime();
 	double kill = 0.025;
@@ -60,7 +64,7 @@ int main(int argc, char * argv[])
 	reduction(+:escapes)
 	{
 		unsigned seed = (omp_get_thread_num()+1)*time(NULL) +1337;
-		double local_flux[NBINS];
+		double local_flux[NBINS] = {0};
 
 		#pragma omp for schedule(dynamic, 10)
 		for( int i = 0; i < np; i++ )
@@ -97,13 +101,17 @@ int main(int argc, char * argv[])
 					{
 						// Tally
 						int bin = find_u_bin(E,Eo,kill,source_E);
-						local_flux[bin] += 1/Sigma_t;
+						local_flux[bin] += 1.0/Sigma_t;
 
 						// Neutron Death
 						break;
 					}
 					else // Elastic Scatter
 					{
+						// Flux Tally
+						// Tally
+						int bin = find_u_bin(E,Eo,kill,source_E);
+						local_flux[bin] += 1.0/Sigma_t;
 						// Scatter
 						double alpha = 0.9833336251;
 						double lowE = alpha*E;
@@ -111,21 +119,17 @@ int main(int argc, char * argv[])
 						r = (double) rand_r(&seed) / RAND_MAX;
 						E = r*delta + lowE;
 
-						// Flux Tally
-						// Tally
-						int bin = find_u_bin(E,Eo,kill,source_E);
-						local_flux[bin] += 1/Sigma_t;
 					}
 				}
 				else // H1 Scatter
 				{
+					// Flux Tally
+					int bin = find_u_bin(E,Eo,kill,source_E);
+					local_flux[bin] += 1.0/Sigma_t;
 					// Sample New Energy
 					r = (double) rand_r(&seed) / RAND_MAX;
 					E = r*E;
 
-					// Flux Tally
-					int bin = find_u_bin(E,Eo,kill,source_E);
-					local_flux[bin] += 1/Sigma_t;
 				}
 
 			} // Neutron Life Loop
@@ -141,7 +145,7 @@ int main(int argc, char * argv[])
 	} // Exit Parallel Region
 
 	double end = omp_get_wtime();
-	print_flux(Eo, kill, source_E, flux);
+	//print_flux(Eo, kill, source_E, flux);
 	printf("Threads: %d\n", omp_get_max_threads());
 	printf("Time = %.2lf sec\n", end-start);
 	printf("Particles per second = %.2e\n", np / (end-start));

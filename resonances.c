@@ -65,9 +65,9 @@ Resonance * res_read(int * n_resonances)
 
 	for( int i = 0; i < lines; i++ )
 	{
-		float dummy;
-		float * dum = &dummy;
-		int num = fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", 
+		double dummy;
+		double * dum = &dummy;
+		fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", 
 				&R[i].Eo,
 				dum,
 				&R[i].Tn,
