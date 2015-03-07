@@ -24,7 +24,7 @@ void run_slowing_down_problem(long HtoU, long np)
 	Input input;
 	input.np = np;                              // Number of Particles
 	input.HtoU = HtoU;                          // H1 to U-238
-	input.Eo = 100;                             // Lethargy Reference E
+	input.Eo = 300;                             // Lethargy Reference E
 	input.kill = 0.6;                         // Kill Energy
 	input.source_E = 250;                       // Source Energy
 	input.low_u = log(input.Eo/input.source_E); // Lethargy Low End
