@@ -136,12 +136,16 @@ void calculate_sigma_a(double E_low, double E_high,
 	bin_high = find_u_bin(E_low, input);
 	bin_low = find_u_bin(E_high, input);
 
-	double sigma_a = 0;
+	double Sigma_a = 0;
 
 	for( int i = bin_low; i < bin_high; i++ )
-		sigma_a += (double) Ra[i] / flux[i];
+		Sigma_a += (double) Ra[i] / flux[i];
 
-	sigma_a = sigma_a/ (double) (bin_high - bin_low);
+	Sigma_a = Sigma_a/ (double) (bin_high - bin_low);
+
+	// Now divide by density
+	double density = (input.HtoU * 1.0 + 238.0) / (input.HtoU + 1);
+	double sigma_a = Sigma_a / density;
 	printf("Group: (%2.0lf-%2.0lf) [eV]    Absorption XS: %8.3lf [b]\n",
 		   E_low, E_high, sigma_a);	
 }
