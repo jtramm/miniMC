@@ -10,12 +10,12 @@ int main(int argc, char * argv[])
 	XS h1 = {0.0, 0.0, 20.0, 20.0};
 
 	double flux[NBINS] = {0};
-	long Ra[NBINS] = {0};
+	double Ra[NBINS] = {0};
 
 	Input input;
 	input.np = 10000000;                        // Number of Particles
 	input.HtoU = 10;                            // H1 to U-238
-	input.Eo = 1000;                            // Lethargy Reference E
+	input.Eo = 100;                            // Lethargy Reference E
 	input.kill = 0.025;                         // Kill Energy
 	input.source_E = 250;                       // Source Energy
 	input.low_u = log(input.Eo/input.source_E); // Lethargy Low End
@@ -32,7 +32,7 @@ int main(int argc, char * argv[])
 	{
 		unsigned seed = (omp_get_thread_num()+1)*time(NULL) +1337;
 		double local_flux[NBINS] = {0};
-		long local_Ra[NBINS] = {0};
+		double local_Ra[NBINS] = {0};
 
 		#pragma omp for schedule(dynamic, 10)
 		for( int i = 0; i < input.np; i++ )
@@ -97,10 +97,25 @@ int main(int argc, char * argv[])
 			for( int i = 0; i < NBINS; i++ )
 			{
 				flux[i] += local_flux[i]/input.np;
-				Ra[i] += local_Ra[i]/input.np;
+				Ra[i] += local_Ra[i] / input.np;
 			}
 		}
 	} // Exit Parallel Region
+
+	// Calculate Group XS's
+	double E_low, E_high;
+	long bin_low, bin_high;
+	E_low = 6.0; E_high = 10;
+	bin_high = find_u_bin(E_low, input);
+	bin_low = find_u_bin(E_high, input);
+
+	double sigma_a = 0;
+	for( int i = bin_low; i < bin_high; i++ )
+	{
+		sigma_a += (double) Ra[i] / flux[i];
+	}
+	sigma_a = sigma_a/ (double) (bin_high - bin_low);
+	printf("sigma_A Group 6-10 eV = %lf\n", sigma_a);
 
 	double end = omp_get_wtime();
 	print_flux(input, flux);
@@ -154,11 +169,11 @@ void tally( double E, Input input, double * flux, double Sigma_t )
 	flux[bin] += 1.0/Sigma_t;
 }
 
-void abs_tally( double E, Input input, double * flux, long * Ra, double Sigma_t )
+void abs_tally( double E, Input input, double * flux, double * Ra, double Sigma_t )
 {
 	int bin = find_u_bin(E,input);
 	// Flux Tally
 	flux[bin] += 1.0/Sigma_t;
 	// Group XS Tally
-	Ra[bin]++;;
+	Ra[bin] += 1.0;;
 }
