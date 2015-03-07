@@ -138,10 +138,20 @@ void calculate_sigma_a(double E_low, double E_high,
 
 	double sigma_a = 0;
 
+	double total_Ra = 0;
+	double total_flux = 0;
+	for( int i = bin_low; i < bin_high; i++ )
+	{
+		total_Ra += Ra[i];
+		total_flux += flux[i];
+	}
+	sigma_a = total_Ra / total_flux;
+	/*
 	for( int i = bin_low; i < bin_high; i++ )
 		sigma_a += (double) Ra[i] / flux[i];
 
 	sigma_a = sigma_a/ (double) (bin_high - bin_low);
+	*/
 
 	/*
 	// Now divide by density
@@ -207,5 +217,5 @@ void abs_tally( double E, Input input, double * flux, double * Ra, double Sigma_
 	// Flux Tally
 	flux[bin] += 1.0/Sigma_t;
 	// Group XS Tally
-	Ra[bin] += 1.0;;
+	Ra[bin] += 1.0;
 }
