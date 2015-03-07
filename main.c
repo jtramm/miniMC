@@ -25,7 +25,7 @@ void run_slowing_down_problem(long HtoU, long np)
 	input.np = np;                              // Number of Particles
 	input.HtoU = HtoU;                          // H1 to U-238
 	input.Eo = 100;                             // Lethargy Reference E
-	input.kill = 0.025;                         // Kill Energy
+	input.kill = 0.6;                         // Kill Energy
 	input.source_E = 250;                       // Source Energy
 	input.low_u = log(input.Eo/input.source_E); // Lethargy Low End
 	input.delta_u = log(input.Eo/input.kill) - input.low_u; // Lethargy Domain
@@ -173,6 +173,13 @@ double find_u_bin_u(int i, Input input)
 	return bin;
 }
 
+double find_u_bin_E( int i, Input input )
+{
+	double u = find_u_bin_u(i, input);
+	double E = input.Eo / exp(u);
+	return E;
+}
+
 double find_E_bin_E(int i, Input input)
 {
 	return (input.source_E / NBINS) * i;
@@ -183,7 +190,7 @@ void print_flux(Input input, double * flux)
 	FILE *fp = fopen("data.dat", "w");
 
 	for(int i = 0; i < NBINS; i++ )
-		fprintf(fp, "%e\t%e\n", find_u_bin_u(i,input),flux[i]);
+		fprintf(fp, "%e\t%e\n", find_u_bin_E(i,input),flux[i]);
 	fclose(fp);
 }
 

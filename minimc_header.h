@@ -41,6 +41,7 @@ void graph_driver(void);
 int find_u_bin(double E, Input input);
 int find_E_bin(double E, Input input);
 double find_u_bin_u(int i, Input input);
+double find_u_bin_E( int i, Input input );
 double find_E_bin_E(int i, Input input);
 void print_flux(Input input, double * flux);
 void tally( double E, Input input, double * flux, double Sigma_t );
