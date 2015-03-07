@@ -14,7 +14,7 @@ int main(int argc, char * argv[])
 
 	Input input;
 	input.np = 10000000;                        // Number of Particles
-	input.HtoU = 10;                            // H1 to U-238
+	input.HtoU = 100000;                            // H1 to U-238
 	input.Eo = 100;                            // Lethargy Reference E
 	input.kill = 0.025;                         // Kill Energy
 	input.source_E = 250;                       // Source Energy
