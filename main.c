@@ -5,7 +5,7 @@
 
 int main(int argc, char * argv[])
 {
-	long np = 1000000;
+	long np = 10000000;
 	run_slowing_down_problem(100000, np);
 	run_slowing_down_problem(100, np);
 	run_slowing_down_problem(10, np);
