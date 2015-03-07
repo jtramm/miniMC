@@ -45,4 +45,7 @@ double find_E_bin_E(int i, Input input);
 void print_flux(Input input, double * flux);
 void tally( double E, Input input, double * flux, double Sigma_t );
 void abs_tally( double E, Input input, double * flux, double * Ra, double Sigma_t );
+void calculate_sigma_a(double E_low, double E_high,
+		double * flux, double * Ra, Input input );
+void run_slowing_down_problem(long HtoU, long np);
 #endif

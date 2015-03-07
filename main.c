@@ -2,20 +2,29 @@
 
 #define NBINS 1000
 
+
 int main(int argc, char * argv[])
 {
-	if( argc == 2 )
-		omp_set_num_threads(atoi(argv[1]));
+	long np = 1000000;
+	run_slowing_down_problem(100000, np);
+	run_slowing_down_problem(100, np);
+	run_slowing_down_problem(10, np);
+	return 0;
+}
+
+void run_slowing_down_problem(long HtoU, long np)
+{
+	printf("==========================================================\n");
+	printf("Hydrogen to Uranium Ratio (H/U): %ld\n", HtoU);
 
 	XS h1 = {0.0, 0.0, 20.0, 20.0};
-
 	double flux[NBINS] = {0};
 	double Ra[NBINS] = {0};
 
 	Input input;
-	input.np = 10000000;                        // Number of Particles
-	input.HtoU = 100000;                            // H1 to U-238
-	input.Eo = 100;                            // Lethargy Reference E
+	input.np = np;                              // Number of Particles
+	input.HtoU = HtoU;                          // H1 to U-238
+	input.Eo = 100;                             // Lethargy Reference E
 	input.kill = 0.025;                         // Kill Energy
 	input.source_E = 250;                       // Source Energy
 	input.low_u = log(input.Eo/input.source_E); // Lethargy Low End
@@ -34,11 +43,13 @@ int main(int argc, char * argv[])
 		double local_flux[NBINS] = {0};
 		double local_Ra[NBINS] = {0};
 
+		// Loop over particles
 		#pragma omp for schedule(dynamic, 10)
 		for( int i = 0; i < input.np; i++ )
 		{
 			double E = input.source_E;
 
+			// Particle Life Loop
 			while(1)
 			{
 				// Kill Particle once it clears Resonances
@@ -101,31 +112,38 @@ int main(int argc, char * argv[])
 			}
 		}
 	} // Exit Parallel Region
+	double end = omp_get_wtime();
 
 	// Calculate Group XS's
-	double E_low, E_high;
+	calculate_sigma_a(6,10,flux,Ra,input);
+	calculate_sigma_a(10,25,flux,Ra,input);
+	calculate_sigma_a(25,50,flux,Ra,input);
+
+	// Print Flux to File
+	print_flux(input, flux);
+	// Compute Resonance Escape Probability
+	printf("Resonance Escape Probability = %.2lf%%\n",(double)escapes/input.np * 100.0);
+	printf("Particles: %.2e\n", (double) input.np);
+	printf("Particles per second = %.2e\n", input.np / (end-start));
+	free(input.R);
+
+}
+
+void calculate_sigma_a(double E_low, double E_high,
+		double * flux, double * Ra, Input input )
+{
 	long bin_low, bin_high;
-	E_low = 6.0; E_high = 10;
 	bin_high = find_u_bin(E_low, input);
 	bin_low = find_u_bin(E_high, input);
 
 	double sigma_a = 0;
-	for( int i = bin_low; i < bin_high; i++ )
-	{
-		sigma_a += (double) Ra[i] / flux[i];
-	}
-	sigma_a = sigma_a/ (double) (bin_high - bin_low);
-	printf("sigma_A Group 6-10 eV = %lf\n", sigma_a);
 
-	double end = omp_get_wtime();
-	print_flux(input, flux);
-	printf("Threads: %d\n", omp_get_max_threads());
-	printf("Particles: %.2e\n", (double) input.np);
-	printf("Time = %.2lf sec\n", end-start);
-	printf("Particles per second = %.2e\n", input.np / (end-start));
-	// Compute Resonance Escape Probability
-	printf("Resonance Escape Probability = %.2lf%%\n",(double)escapes/input.np * 100.0);
-	return 0;
+	for( int i = bin_low; i < bin_high; i++ )
+		sigma_a += (double) Ra[i] / flux[i];
+
+	sigma_a = sigma_a/ (double) (bin_high - bin_low);
+	printf("Group: (%2.0lf-%2.0lf) [eV]    Absorption XS: %8.3lf [b]\n",
+		   E_low, E_high, sigma_a);	
 }
 
 int find_u_bin(double E, Input input)
