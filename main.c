@@ -35,9 +35,9 @@ double run_slowing_down_problem(long HtoU, long np, XS (*Get_XS)( double, double
 	Input input;
 	input.np = np;                              // Number of Particles
 	input.HtoU = HtoU;                          // H1 to U-238
-	input.Eo = 300;                             // Lethargy Reference E
+	input.source_E = 2000000;                   // Source Energy
+	input.Eo = input.source_E;                  // Lethargy Reference E
 	input.kill = 0.6;                           // Kill Energy
-	input.source_E = 2000000;                       // Source Energy
 	input.low_u = log(input.Eo/input.source_E); // Lethargy Low End
 	input.delta_u = log(input.Eo/input.kill) - input.low_u; // Lethargy Domain
 	input.temp = 300;                           // Temperature
