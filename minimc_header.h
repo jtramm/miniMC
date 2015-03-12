@@ -6,6 +6,7 @@
 #include<complex.h>
 #include<time.h>
 #include<omp.h>
+#include"Faddeeva.h"
 
 typedef struct{
 	double Eo;
@@ -35,7 +36,8 @@ typedef struct{
 
 Resonance * res_read(int * n_resonances);
 double complex FNF( double complex Z );
-XS calculate_XS( double E, double temp, Resonance * R, int nr );
+XS FNF_calculate_XS( double E, double temp, Resonance * R, int nr );
+XS MIT_calculate_XS( double E, double temp, Resonance * R, int nr );
 void res_out( XS * xs, int gp );
 void graph_driver(void);
 int find_u_bin(double E, Input input);
@@ -48,5 +50,5 @@ void tally( double E, Input input, double * flux, double Sigma_t );
 void abs_tally( double E, Input input, double * flux, double * Ra, double Sigma_t );
 void calculate_sigma_a(double E_low, double E_high,
 		double * flux, double * Ra, Input input );
-void run_slowing_down_problem(long HtoU, long np);
+double run_slowing_down_problem(long HtoU, long np, XS (*Get_XS)( double, double, Resonance *, int) );
 #endif

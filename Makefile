@@ -5,7 +5,8 @@ program = minimc
 source = \
 main.c \
 resonances.c \
-FNF.c
+FNF.c \
+Faddeeva.c
 
 obj = $(source:.c=.o)
 

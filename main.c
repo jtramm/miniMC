@@ -5,16 +5,27 @@
 
 int main(int argc, char * argv[])
 {
-	long np = 1000000;
-	run_slowing_down_problem(100000, np);
-	run_slowing_down_problem(100, np);
-	run_slowing_down_problem(10, np);
+	long np = 100000;
+	double FNF, MIT;
+	XS (*Get_XS)( double, double, Resonance *, int);
+
+	printf("Threads = %d\n", omp_get_max_threads());
+	printf("FNF Slowing Down==========================================\n");
+	Get_XS = &FNF_calculate_XS;
+	FNF = run_slowing_down_problem(100000, np, Get_XS);
+	printf("MIT Slowing Down==========================================\n");
+	Get_XS = &MIT_calculate_XS;
+	MIT = run_slowing_down_problem(100000, np, Get_XS);
+
+	printf("SUMMARY===================================================\n");
+	printf("FNF Particles/sec: %.2lf\n", np / FNF);
+	printf("MIT Particles/sec: %.2lf\n", np / MIT);
+	printf("FNF Advantage: %.2lf%%\n", ((MIT-FNF) / MIT) * 100.0);
 	return 0;
 }
 
-void run_slowing_down_problem(long HtoU, long np)
+double run_slowing_down_problem(long HtoU, long np, XS (*Get_XS)( double, double, Resonance *, int) )
 {
-	printf("==========================================================\n");
 	printf("Hydrogen to Uranium Ratio (H/U): %ld\n", HtoU);
 
 	XS h1 = {0.0, 0.0, 20.0, 20.0};
@@ -25,18 +36,18 @@ void run_slowing_down_problem(long HtoU, long np)
 	input.np = np;                              // Number of Particles
 	input.HtoU = HtoU;                          // H1 to U-238
 	input.Eo = 300;                             // Lethargy Reference E
-	input.kill = 0.6;                         // Kill Energy
-	input.source_E = 250;                       // Source Energy
+	input.kill = 0.6;                           // Kill Energy
+	input.source_E = 2000000;                       // Source Energy
 	input.low_u = log(input.Eo/input.source_E); // Lethargy Low End
 	input.delta_u = log(input.Eo/input.kill) - input.low_u; // Lethargy Domain
 	input.temp = 300;                           // Temperature
 	input.R = res_read(&input.nr);              // Resonances
-	input.nr = 3;                               // Number of Resonances
+	//input.nr = 3;                             // Number of Resonances
 
 	int escapes = 0;
 	double start = omp_get_wtime();
 	#pragma omp parallel default (none) \
-	shared(input, h1, flux, Ra) \
+	shared(input, h1, flux, Ra, Get_XS) \
 	reduction(+:escapes)
 	{
 		unsigned seed = (omp_get_thread_num()+1)*time(NULL) +1337;
@@ -60,7 +71,7 @@ void run_slowing_down_problem(long HtoU, long np)
 				}
 
 				// Get XS's
-				XS u238 = calculate_XS( E, input.temp, input.R, input.nr );
+				XS u238 = (*Get_XS)( E, input.temp, input.R, input.nr );
 
 				// Calculate total XS
 				double Sigma_t = u238.sigma_t + input.HtoU * h1.sigma_t;
@@ -127,6 +138,7 @@ void run_slowing_down_problem(long HtoU, long np)
 	printf("Particles per second = %.2e\n", input.np / (end-start));
 	free(input.R);
 
+	return end-start;
 }
 
 void calculate_sigma_a(double E_low, double E_high,
