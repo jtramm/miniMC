@@ -38,6 +38,7 @@ Resonance * res_read(int * n_resonances);
 double complex FNF( double complex Z );
 XS FNF_calculate_XS( double E, double temp, Resonance * R, int nr );
 XS MIT_calculate_XS( double E, double temp, Resonance * R, int nr );
+XS Simple_FNF_calculate_XS( double E, double temp, Resonance * R, int nr );
 void res_out( XS * xs, int gp );
 void graph_driver(void);
 int find_u_bin(double E, Input input);
@@ -51,4 +52,6 @@ void abs_tally( double E, Input input, double * flux, double * Ra, double Sigma_
 void calculate_sigma_a(double E_low, double E_high,
 		double * flux, double * Ra, Input input );
 double run_slowing_down_problem(long HtoU, long np, XS (*Get_XS)( double, double, Resonance *, int) );
+double complex SIMD_FNF( double complex Z );
+XS SIMD_FNF_calculate_XS( double E, double temp, Resonance * R, int nr );
 #endif

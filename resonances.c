@@ -1,4 +1,32 @@
 #include "minimc_header.h"
+XS SIMD_FNF_calculate_XS( double E, double temp, Resonance * R, int nr )
+{
+	double sigma_pot = 11.2934;
+	double k = 8.6173324e-5;
+	double A = 238.05078826;
+	XS xs = {0};
+	xs.E = E;
+
+	for( int j = 0; j < nr; j++ )
+	{
+		double r = 2603911.0 / R[j].Eo * (A+1) / A;
+		double q = 2.0 * sqrt(r * sigma_pot);
+		double T = R[j].Tn + R[j].Tg;
+		double x = 2.0 * (E - R[j].Eo) / T;
+		double xi = T * sqrt(A / (4.0 * k * temp * R[j].Eo));
+		double complex faddeeva_in = x + I;
+		faddeeva_in *= xi;
+		double complex faddeeva_out = xi * SIMD_FNF( faddeeva_in);
+		double psi = sqrt(M_PI) * creal(faddeeva_out); 
+		double chi = sqrt(M_PI) * cimag(faddeeva_out);
+		xs.sigma_g += R[j].Tn * R[j].Tg / (T*T) * sqrt(R[j].Eo / E) * r * psi;
+		xs.sigma_n += R[j].Tn * R[j].Tn / (T*T) * ( r * psi + q * T/R[j].Tn * chi ); 
+	}
+	xs.sigma_n += sigma_pot;
+	xs.sigma_t = xs.sigma_g + xs.sigma_n;
+
+	return xs;
+}
 
 XS FNF_calculate_XS( double E, double temp, Resonance * R, int nr )
 {
@@ -20,6 +48,42 @@ XS FNF_calculate_XS( double E, double temp, Resonance * R, int nr )
 		double complex faddeeva_out = xi * FNF( faddeeva_in);
 		double psi = sqrt(M_PI) * creal(faddeeva_out); 
 		double chi = sqrt(M_PI) * cimag(faddeeva_out);
+		xs.sigma_g += R[j].Tn * R[j].Tg / (T*T) * sqrt(R[j].Eo / E) * r * psi;
+		xs.sigma_n += R[j].Tn * R[j].Tn / (T*T) * ( r * psi + q * T/R[j].Tn * chi ); 
+	}
+	xs.sigma_n += sigma_pot;
+	xs.sigma_t = xs.sigma_g + xs.sigma_n;
+
+	return xs;
+}
+XS Simple_FNF_calculate_XS( double E, double temp, Resonance * R, int nr )
+{
+	double sigma_pot = 11.2934;
+	double k = 8.6173324e-5;
+	double A = 238.05078826;
+	XS xs = {0};
+	xs.E = E;
+	// Pre-computed parameters
+	const double a = 0.5124242247547684; const double b = 0.2752551286084109;
+	const double c = 0.0517653587929878; const double d = 2.7247448713915890;
+
+
+	#pragma simd
+	for( int j = 0; j < nr; j++ )
+	{
+		double r = 2603911.0 / R[j].Eo * (A+1) / A;
+		double q = 2.0 * sqrt(r * sigma_pot);
+		double T = R[j].Tn + R[j].Tg;
+		double x = 2.0 * (E - R[j].Eo) / T;
+		double xi = T * sqrt(A / (4.0 * k * temp * R[j].Eo));
+		double complex Z = x + I;
+		Z *= xi;
+
+		// Three Term Asymptotic Expansion
+		double complex W = I * Z * (a/(Z*Z - b) + c/(Z*Z - d));
+		W = W*xi;
+		double psi = sqrt(M_PI) * creal(W); 
+		double chi = sqrt(M_PI) * cimag(W);
 		xs.sigma_g += R[j].Tn * R[j].Tg / (T*T) * sqrt(R[j].Eo / E) * r * psi;
 		xs.sigma_n += R[j].Tn * R[j].Tn / (T*T) * ( r * psi + q * T/R[j].Tn * chi ); 
 	}

@@ -1,4 +1,4 @@
-COMPILER    = gnu
+COMPILER    = intel
 
 program = minimc
 
@@ -27,7 +27,7 @@ endif
 ifeq ($(COMPILER),intel)
   CC = icc
   LDFLAGS += 
-  CFLAGS += -O3 -xhost -ansi-alias -no-prec-div -DINTEL -vec-report6
+  CFLAGS += -O3 -xhost -ansi-alias -no-prec-div -DINTEL -openmp -ipo
 endif
 
 $(program): $(obj) minimc_header.h

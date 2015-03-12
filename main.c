@@ -5,22 +5,33 @@
 
 int main(int argc, char * argv[])
 {
-	long np = 100000;
-	double FNF, MIT;
+	double FNF, MIT, SNF, SIMD;
 	XS (*Get_XS)( double, double, Resonance *, int);
-
 	printf("Threads = %d\n", omp_get_max_threads());
+
+	long np = 100000;
+	printf("NP = %ld\n", np);
+	printf("SNF Slowing Down==========================================\n");
+	Get_XS = &Simple_FNF_calculate_XS;
+	SNF = run_slowing_down_problem(100000, np, Get_XS);
 	printf("FNF Slowing Down==========================================\n");
 	Get_XS = &FNF_calculate_XS;
 	FNF = run_slowing_down_problem(100000, np, Get_XS);
+	printf("SIMD Slowing Down==========================================\n");
+	Get_XS = &SIMD_FNF_calculate_XS;
+	SIMD = run_slowing_down_problem(100000, np, Get_XS);
 	printf("MIT Slowing Down==========================================\n");
 	Get_XS = &MIT_calculate_XS;
 	MIT = run_slowing_down_problem(100000, np, Get_XS);
 
 	printf("SUMMARY===================================================\n");
-	printf("FNF Particles/sec: %.2lf\n", np / FNF);
-	printf("MIT Particles/sec: %.2lf\n", np / MIT);
-	printf("FNF Advantage: %.2lf%%\n", ((MIT-FNF) / MIT) * 100.0);
+	printf("SNF  Particles/sec: %.2lf\n", np / SNF);
+	printf("FNF  Particles/sec: %.2lf\n", np / FNF);
+	printf("MIT  Particles/sec: %.2lf\n", np / MIT);
+	printf("SIMD Particles/sec: %.2lf\n", np / SIMD);
+	printf("FNF  Advantage: %.2lf%%\n", ((MIT-FNF) / MIT) * 100.0);
+	printf("SNF  Advantage: %.2lf%%\n", ((MIT-SNF) / MIT) * 100.0);
+	printf("SIMD Advantage: %.2lf%%\n", ((MIT-SIMD) / MIT) * 100.0);
 	return 0;
 }
 
@@ -42,6 +53,7 @@ double run_slowing_down_problem(long HtoU, long np, XS (*Get_XS)( double, double
 	input.delta_u = log(input.Eo/input.kill) - input.low_u; // Lethargy Domain
 	input.temp = 300;                           // Temperature
 	input.R = res_read(&input.nr);              // Resonances
+	printf("resonances: %d\n", input.nr);
 	//input.nr = 3;                             // Number of Resonances
 
 	int escapes = 0;
@@ -160,7 +172,7 @@ void calculate_sigma_a(double E_low, double E_high,
 	sigma_a = total_Ra / total_flux;
 
 	printf("Group: (%2.0lf-%2.0lf) [eV]    Absorption XS: %8.3lf [b]\n",
-		   E_low, E_high, sigma_a);	
+			E_low, E_high, sigma_a);	
 }
 
 int find_u_bin(double E, Input input)
