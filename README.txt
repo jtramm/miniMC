@@ -1,4 +1,4 @@
-1D homogenous Monte Carlo for 22.211 PSet 1
+1D homogenous Monte Carlo
 John Tramm
 
 You can compile and run using the included makefile
